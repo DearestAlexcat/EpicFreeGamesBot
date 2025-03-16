@@ -7,6 +7,7 @@ using Google.Cloud.Firestore;
 using Google.Cloud.Storage.V1;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using System.Security.AccessControl;
 
 public static class Scheduler
 {
@@ -186,7 +187,7 @@ class Program
             GatewayIntents = GatewayIntents.Guilds | GatewayIntents.GuildMessages | GatewayIntents.MessageContent 
         };
 
-        var token = "TOKEN"; // Replace with your TOKEN
+        var token = "Token"; // Replace with your TOKEN
 
         var client = new DiscordSocketClient(config);
         client.Log += Log;
@@ -196,7 +197,7 @@ class Program
         await client.LoginAsync(TokenType.Bot, token);
         await client.StartAsync();
 
-        channel = await client.GetChannelAsync(123456789012345678) as IMessageChannel; // Replace with your CHANNEL_ID
+        channel = await client.GetChannelAsync(1111) as IMessageChannel; // Replace with your CHANNEL_ID
 
         // The bot will work until it is completed.
         await Task.Delay(-1);
@@ -249,9 +250,9 @@ class Program
                 if (message.Content.ToLower() == "!freegames")  // Command to receive game announcements
                 {
                     var freeGames = await GetEpicFreeGames();
-                    var unwatchedFreeGames = await CheckViewedGames(freeGames);
+                    //var unwatchedFreeGames = await CheckViewedGames(freeGames);
 
-                    foreach (var game in unwatchedFreeGames)
+                    foreach (var game in freeGames)
                     {
                         var embed = new EmbedBuilder
                         {
@@ -262,10 +263,10 @@ class Program
                             Color = Color.Blue
                         }.Build();
 
-                        var combinedList = freeGames.Concat(unwatchedFreeGames).ToList();
+                        //var combinedList = freeGames.Concat(unwatchedFreeGames).ToList();
 
                         // Save your game list to Google Cloud Storage
-                        await GoogleCloudStorageHelper.SaveWatchedGamesAsync(fileName, combinedList);
+                       //await GoogleCloudStorageHelper.SaveWatchedGamesAsync(fileName, combinedList);
 
                         await message.Channel.SendMessageAsync(embed: embed);
                     }
@@ -356,7 +357,7 @@ class Program
                                 Title = game["title"]?.ToString() ?? "No Title",
                                 Description = game["description"]?.ToString() ?? "No Description",
                                 ImageUrl = game["keyImages"]?[0]?["url"]?.ToString() ?? "No Image",
-                                Url = $"https://www.epicgames.com/store/en-US/p/{game["productSlug"]?.ToString()}"
+                                Url = ConstructGameUrl(game)
                             });
                         }
                     }
@@ -369,5 +370,46 @@ class Program
         }
 
         return freeGames;
+    }
+
+    private static string ConstructGameUrl(JToken game)
+    {
+        // Try to get the productSlug directly (most reliable for full games)
+        var productSlug = game["productSlug"]?.ToString();
+        if (!string.IsNullOrEmpty(productSlug))
+        {
+            return $"https://www.epicgames.com/store/en-US/p/{productSlug}";
+        }
+
+        // Check offerMappings first (used for DLCs or special offers)
+        var offerMappings = game["offerMappings"] as JArray;
+        if (offerMappings != null && offerMappings.Count > 0)
+        {
+            var firstOffer = offerMappings[0];
+            var pageSlug = firstOffer["pageSlug"]?.ToString();
+            if (!string.IsNullOrEmpty(pageSlug))
+            {
+                return $"https://www.epicgames.com/store/en-US/p/{pageSlug}";
+            }
+        }
+
+        // Fallback to catalogNs.mappings (used for full games)
+        var catalogNs = game["catalogNs"] as JObject;
+        if (catalogNs != null)
+        {
+            var mappings = catalogNs["mappings"] as JArray;
+            if (mappings != null && mappings.Count > 0)
+            {
+                var firstMapping = mappings[0];
+                var pageSlug = firstMapping["pageSlug"]?.ToString();
+                if (!string.IsNullOrEmpty(pageSlug))
+                {
+                    return $"https://www.epicgames.com/store/en-US/p/{pageSlug}";
+                }
+            }
+        }
+
+        // If no valid URL found, return default store URL
+        return "https://www.epicgames.com/store/en-US/";
     }
 }
