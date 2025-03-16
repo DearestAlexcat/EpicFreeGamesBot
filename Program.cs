@@ -82,9 +82,11 @@ namespace EpicFreeGamesBot
                     if (message.Content.ToLower() == "!freegames")  // Command to receive game announcements
                     {
                         var freeGames = await GetEpicFreeGames();
-                        var unwatchedFreeGames = await CheckViewedGames(freeGames);
+                        var loadedGames = await GoogleCloudStorageHelper.LoadWatchedGamesAsync(fileName);  // Loading a list of games from Google Cloud Storage
+                        
+                        freeGames = GetUnwathedGames(loadedGames, freeGames);
 
-                        foreach (var game in unwatchedFreeGames)
+                        foreach (var game in freeGames)
                         {
                             var embed = new EmbedBuilder
                             {
@@ -95,10 +97,12 @@ namespace EpicFreeGamesBot
                                 Color = Color.Blue
                             }.Build();
 
-                            var combinedList = freeGames.Concat(unwatchedFreeGames).ToList();
-                            
-                            // Save your game list to Google Cloud Storage
-                            await GoogleCloudStorageHelper.SaveWatchedGamesAsync(fileName, combinedList);
+                            if(loadedGames != null)
+                            {
+                                // Save your game list to Google Cloud Storage
+                                var combinedTitles = loadedGames.Concat(freeGames.Select(game => game.Title)).ToList();
+                                await GoogleCloudStorageHelper.SaveWatchedGamesAsync(fileName, combinedTitles);
+                            }
 
                             await message.Channel.SendMessageAsync(embed: embed);
                         }
@@ -115,16 +119,11 @@ namespace EpicFreeGamesBot
             }
         }
 
-        static async Task<List<FreeGame>> CheckViewedGames(List<FreeGame> freeGames)
+        static List<FreeGame> GetUnwathedGames(List<string> loadedGames, List<FreeGame> freeGames)
         {
-            // Loading a list of games from Google Cloud Storage
-            var loadedGames = await GoogleCloudStorageHelper.LoadWatchedGamesAsync(fileName);
             if (loadedGames == null || loadedGames.Count == 0)
                 return freeGames;
-
-            List<FreeGame> unviewedGames = new List<FreeGame>();
-            unviewedGames = freeGames.Where(game => !loadedGames.Contains(game.Title)).ToList();
-            return unviewedGames;
+            return freeGames.Where(game => !loadedGames.Contains(game.Title)).ToList();
         }
 
         static public async Task<List<FreeGame>> GetEpicFreeGames()

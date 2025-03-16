@@ -54,10 +54,10 @@ namespace EpicFreeGamesBot
         private static readonly string bucketName = "your-bucket-name"; // Provide a name bucket
         private static StorageClient storageClient = StorageClient.Create();
 
-        public static async Task SaveWatchedGamesAsync(string fileName, List<FreeGame> watchedGames)
+        public static async Task SaveWatchedGamesAsync(string fileName, List<string> watchedGames)
         {
             // Convert a list of games to a JSON string. We save only Title
-            string jsonData = JsonConvert.SerializeObject(watchedGames.Select(game => game.Title).ToList());
+            string jsonData = JsonConvert.SerializeObject(watchedGames);
 
             // Create a stream to write data to a file
             using (var memoryStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(jsonData)))
@@ -90,7 +90,7 @@ namespace EpicFreeGamesBot
                         Program.DebugLog("File loaded from Google Cloud Storage.", ConsoleColor.Green);
 
                         if (watchedGames == null)
-                            return new List<string>();
+                            return null;
 
                         return watchedGames;
                     }
@@ -99,7 +99,7 @@ namespace EpicFreeGamesBot
             catch (Exception ex)
             {
                 Program.DebugLogException($"Error loading file from Google Cloud Storage: ", ex.Message);
-                return new List<string>();
+                return null;
             }
         }
     }
