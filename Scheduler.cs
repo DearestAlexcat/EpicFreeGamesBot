@@ -55,7 +55,7 @@ namespace EpicFreeGamesBot
             }
             catch (Exception ex)
             {
-                DebugService.DebugLogException($"Error channel.SendMessage: ", ex.Message);
+                Debug.Log($"Error channel.SendMessage: ", ex.Message);
             }
         }
     }

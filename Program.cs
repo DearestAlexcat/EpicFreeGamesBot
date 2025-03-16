@@ -48,8 +48,6 @@ namespace EpicFreeGamesBot
             return Task.CompletedTask;
         }
 
-      
-
         // ---------------------------------------------------------------------------------------------------
 
         static async Task MessageReceived(SocketMessage arg)
