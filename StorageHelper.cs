@@ -64,7 +64,7 @@ namespace EpicFreeGamesBot
             {
                 // Uploading a file to Cloud Storage
                 await storageClient.UploadObjectAsync(bucketName, fileName, "application/json", memoryStream);
-                Program.DebugLog("File uploaded to Google Cloud Storage.", ConsoleColor.Green);
+                Debug.Log("File uploaded to Google Cloud Storage.", ConsoleColor.Green);
             }
         }
 
@@ -87,7 +87,7 @@ namespace EpicFreeGamesBot
                         string jsonData = await reader.ReadToEndAsync();
                         var watchedGames = JsonConvert.DeserializeObject<List<string>>(jsonData);
 
-                        Program.DebugLog("File loaded from Google Cloud Storage.", ConsoleColor.Green);
+                        Debug.Log("File loaded from Google Cloud Storage.", ConsoleColor.Green);
 
                         if (watchedGames == null)
                             return null;
@@ -98,7 +98,7 @@ namespace EpicFreeGamesBot
             }
             catch (Exception ex)
             {
-                Program.DebugLogException($"Error loading file from Google Cloud Storage: ", ex.Message);
+                Debug.Log($"Error loading file from Google Cloud Storage: ", ex.Message);
                 return null;
             }
         }

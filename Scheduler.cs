@@ -37,7 +37,7 @@ namespace EpicFreeGamesBot
         {
             try
             {
-                var freeGames = await Program.GetEpicFreeGames();
+                var freeGames = await EpicGameServices.GetEpicFreeGames();
 
                 foreach (var game in freeGames)
                 {
@@ -55,7 +55,7 @@ namespace EpicFreeGamesBot
             }
             catch (Exception ex)
             {
-                Program.DebugLogException($"Error channel.SendMessage: ", ex.Message);
+                DebugService.DebugLogException($"Error channel.SendMessage: ", ex.Message);
             }
         }
     }
