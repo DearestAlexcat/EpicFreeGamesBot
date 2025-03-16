@@ -98,7 +98,7 @@ namespace EpicFreeGamesBot
             }
             catch (Exception ex)
             {
-                Debug.Log($"Error loading file from Google Cloud Storage: ", ex.Message);
+                Debug.LogError($"Error loading file from Google Cloud Storage: ", ex.Message);
                 return null;
             }
         }

@@ -74,7 +74,7 @@ namespace EpicFreeGamesBot
                 }
                 catch (Exception ex)
                 {
-                    Debug.Log($"Error processing game: ", ex.Message);
+                    Debug.LogError($"Error processing game: ", ex.Message);
                 }
             }
 

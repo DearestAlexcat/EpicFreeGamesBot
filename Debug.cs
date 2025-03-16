@@ -9,7 +9,7 @@
             Console.ForegroundColor = ConsoleColor.Gray;
         }
 
-        static public void Log(params string[] msg)
+        static public void LogError(params string[] msg)
         {
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine(msg[0]);
