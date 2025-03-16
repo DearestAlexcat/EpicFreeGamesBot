@@ -1,4 +1,5 @@
-﻿using Google.Cloud.Firestore;
+﻿using Google.Apis.Auth.OAuth2;
+using Google.Cloud.Firestore;
 using Google.Cloud.Storage.V1;
 using Newtonsoft.Json;
 
@@ -49,10 +50,26 @@ namespace EpicFreeGamesBot
      }
      */
 
-    public class GoogleCloudStorageHelper
+    public static class GoogleCloudStorageHelper
     {
-        private static readonly string bucketName = "your-bucket-name"; // Provide a name bucket
-        private static StorageClient storageClient = StorageClient.Create();
+        private static readonly string bucketName = "epic-games-bot-data"; // Provide a name bucket
+        private static StorageClient storageClient;
+
+        static GoogleCloudStorageHelper()
+        {
+            // Path where the secret is mounted
+            var credentialPath = "/secrets/gcp-key.json";
+
+            if (File.Exists(credentialPath))
+            {
+                var credential = GoogleCredential.FromFile(credentialPath);
+                storageClient = StorageClient.Create(credential);
+            }
+            else
+            {
+                throw new Exception("Google Cloud credential file not found!");
+            }
+        }
 
         public static async Task SaveWatchedGamesAsync(string fileName, List<string> watchedGames)
         {
