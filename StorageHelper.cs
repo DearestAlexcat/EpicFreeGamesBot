@@ -60,28 +60,49 @@ namespace EpicFreeGamesBot
             // Path where the secret is mounted
             var credentialPath = "/secrets/gcp-key.json";
 
-            if (File.Exists(credentialPath))
+            try
             {
-                var credential = GoogleCredential.FromFile(credentialPath);
-                storageClient = StorageClient.Create(credential);
+                if (File.Exists(credentialPath))
+                {
+                    var credential = GoogleCredential.FromFile(credentialPath);
+                    storageClient = StorageClient.Create(credential);
+                }
+                else
+                {
+                    throw new Exception("Google Cloud credential file not found!");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                throw new Exception("Google Cloud credential file not found!");
+                Debug.LogError($"Error handling Google Cloud credentials file: ", ex.Message);
             }
         }
 
         public static async Task SaveWatchedGamesAsync(string fileName, List<string> watchedGames)
         {
-            // Convert a list of games to a JSON string. We save only Title
-            string jsonData = JsonConvert.SerializeObject(watchedGames);
-
-            // Create a stream to write data to a file
-            using (var memoryStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(jsonData)))
+            try
             {
-                // Uploading a file to Cloud Storage
-                await storageClient.UploadObjectAsync(bucketName, fileName, "application/json", memoryStream);
-                Debug.Log("File uploaded to Google Cloud Storage.", ConsoleColor.Green);
+                if (storageClient == null)
+                {
+                    // TODO: does not catch Null Reference Exception
+                    Debug.LogError($"Method `SaveWatchedGamesAsync`: ", "storageClient is null");
+                    return;
+                }
+
+                // Convert a list of games to a JSON string. We save only Title
+                string jsonData = JsonConvert.SerializeObject(watchedGames);
+
+                // Create a stream to write data to a file
+                using (var memoryStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(jsonData)))
+                {
+                    // Uploading a file to Cloud Storage
+                    await storageClient.UploadObjectAsync(bucketName, fileName, "application/json", memoryStream);
+                    Debug.Log("File uploaded to Google Cloud Storage.", ConsoleColor.Green);
+                }
+            }
+            catch (Exception ex) 
+            {
+                Debug.LogError($"Error saving file to Google Cloud Storage: ", ex.Message);
             }
         }
 
@@ -89,6 +110,13 @@ namespace EpicFreeGamesBot
         {
             try
             {
+                if (storageClient == null)
+                {
+                    // TODO: does not catch Null Reference Exception
+                    Debug.LogError($"Method `LoadWatchedGamesAsync`: ", "storageClient is null");
+                    return null;
+                }
+
                 // Getting an object from storage
                 var obj = await storageClient.GetObjectAsync(bucketName, fileName);
 

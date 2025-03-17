@@ -12,11 +12,13 @@
         static public void LogError(params string[] msg)
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(msg[0]);
+            Console.Write(msg[0]);
             Console.ForegroundColor = ConsoleColor.Gray;
-            
-            foreach (var message in msg)
-                Console.WriteLine(message);
+
+            if(msg.Length == 1) Console.WriteLine();
+
+            for (int i = 1; i < msg.Length; i++)
+                Console.WriteLine(msg[i]);
         }
     }
 }

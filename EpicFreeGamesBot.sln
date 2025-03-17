@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.35122.118
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EpicFreeGamesBot", "EpicFreeGamesBot.csproj", "{1632C3F5-C5EB-4911-BF6F-F15138EBCB05}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1632C3F5-C5EB-4911-BF6F-F15138EBCB05}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1632C3F5-C5EB-4911-BF6F-F15138EBCB05}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1632C3F5-C5EB-4911-BF6F-F15138EBCB05}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1632C3F5-C5EB-4911-BF6F-F15138EBCB05}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F461BEF8-A4D0-4ED0-A481-8BB3BC5B48E5}
+	EndGlobalSection
+EndGlobal

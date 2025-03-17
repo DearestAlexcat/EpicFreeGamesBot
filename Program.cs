@@ -10,28 +10,35 @@ namespace EpicFreeGamesBot
 
         static async Task Main(string[] args)
         {
-            // Launch the scheduler
-            await Scheduler.StartScheduler();
-
-            var config = new DiscordSocketConfig
+            try
             {
-                GatewayIntents = GatewayIntents.Guilds | GatewayIntents.GuildMessages | GatewayIntents.MessageContent
-            };
+                // Launch the scheduler
+                await Scheduler.StartScheduler();
 
-            var token = "Token"; // Replace with your TOKEN
+                var config = new DiscordSocketConfig
+                {
+                    GatewayIntents = GatewayIntents.Guilds | GatewayIntents.GuildMessages | GatewayIntents.MessageContent
+                };
 
-            var client = new DiscordSocketClient(config);
-            client.Log += Log;
-            client.Ready += Ready;
-            client.MessageReceived += MessageReceived;
+                var token = "Token"; // Replace with your TOKEN
 
-            await client.LoginAsync(TokenType.Bot, token);
-            await client.StartAsync();
+                var client = new DiscordSocketClient(config);
+                client.Log += Log;
+                client.Ready += Ready;
+                client.MessageReceived += MessageReceived;
 
-            channel = await client.GetChannelAsync(1111) as IMessageChannel; // Replace with your CHANNEL_ID
+                await client.LoginAsync(TokenType.Bot, token);
+                await client.StartAsync();
 
-            // The bot will work until it is completed.
-            await Task.Delay(-1);
+                channel = await client.GetChannelAsync(1111) as IMessageChannel; // Replace with your CHANNEL_ID
+
+                // The bot will work until it is completed.
+                await Task.Delay(-1);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error: ", ex.Message);
+            }
         }
 
         // ---------------------------------------------------------------------------------------------------
@@ -80,15 +87,17 @@ namespace EpicFreeGamesBot
                                 Color = Color.Blue
                             }.Build();
 
-                            if (loadedGames != null)
-                            {
-                                // Save your game list to Google Cloud Storage
-                                var combinedTitles = loadedGames.Concat(freeGames.Select(game => game.Title)).ToList();
-                                await GoogleCloudStorageHelper.SaveWatchedGamesAsync(fileName, combinedTitles);
-                            }
-
                             await message.Channel.SendMessageAsync(embed: embed);
                         }
+
+                        // Save your game list to Google Cloud Storage
+                        if (loadedGames == null) loadedGames = new();
+                        var combinedTitles = loadedGames.Concat(freeGames.Select(game => game.Title)).ToList();
+                        await GoogleCloudStorageHelper.SaveWatchedGamesAsync(fileName, combinedTitles);
+
+                        Debug.Log("-> Saved titles:", ConsoleColor.Green);
+                        foreach (var item in combinedTitles)
+                            Debug.Log("   " + item);
                     }
                     else
                     {
