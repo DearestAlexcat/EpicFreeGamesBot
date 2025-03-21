@@ -4,21 +4,41 @@ namespace EpicFreeGamesBot
 {
     static class EpicGameServices
     {
+        private static readonly HttpClient httpClient = new HttpClient();
+        private const string EpicGamesApiUrl = "https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions";
+
         static public async Task<List<FreeGame>> GetEpicFreeGames()
         {
-            var httpClient = new HttpClient();
-            var response = await httpClient.GetStringAsync("https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions");
-            var json = JObject.Parse(response);
-
-            // Safely navigate the JSON structure
-            var games = json["data"]?["Catalog"]?["searchStore"]?["elements"] as JArray;
-
-            if (games == null)
+            try
             {
-                Debug.Log("No games found in the API response.", ConsoleColor.Red);
+                var response = await httpClient.GetStringAsync(EpicGamesApiUrl);
+                var json = JObject.Parse(response);
+
+                // Safely navigate the JSON structure
+                var games = json["data"]?["Catalog"]?["searchStore"]?["elements"] as JArray;
+
+                if (games == null)
+                {
+                    Debug.Log("No games found in the API response.", ConsoleColor.Red);
+                    return new List<FreeGame>();
+                }
+
+                return ExtractFreeGames(games);
+            }
+            catch (HttpRequestException ex)
+            {
+                Debug.LogError("HTTP request failed:", ex.Message);
                 return new List<FreeGame>();
             }
+            catch (Exception ex)
+            {
+                Debug.LogError("Error getting free games:", ex.Message);
+                return new List<FreeGame>();
+            }
+        }
 
+        private static List<FreeGame> ExtractFreeGames(JArray games)
+        {
             var freeGames = new List<FreeGame>();
 
             foreach (var game in games)
@@ -27,35 +47,23 @@ namespace EpicFreeGamesBot
                 {
                     // Check if the game has promotions
                     var promotions = game["promotions"] as JObject;
-                    if (promotions == null)
-                    {
-                        continue; // Skip this game if there are no promotions
-                    }
+                    if (promotions == null) continue;
 
                     // Check if promotionalOffers exists and is an array
                     var promotionalOffers = promotions["promotionalOffers"] as JArray;
-                    if (promotionalOffers == null || !promotionalOffers.HasValues)
-                    {
-                        continue; // Skip this game if there are no promotional offers
-                    }
+                    if (promotionalOffers == null || !promotionalOffers.HasValues) continue;
 
                     // Iterate through promotional offers
                     foreach (var offer in promotionalOffers)
                     {
                         var promoOffers = offer["promotionalOffers"] as JArray;
-                        if (promoOffers == null || !promoOffers.HasValues)
-                        {
-                            continue; // Skip this offer if it has no valid promotions
-                        }
+                        if (promoOffers == null || !promoOffers.HasValues) continue;
 
                         foreach (var promo in promoOffers)
                         {
                             // Check if the discount percentage is 0 (free game)
                             var discountSetting = promo["discountSetting"] as JObject;
-                            if (discountSetting == null)
-                            {
-                                continue; // Skip if discountSetting is missing
-                            }
+                            if (discountSetting == null) continue;
 
                             var discountPercentage = discountSetting["discountPercentage"]?.ToString();
                             if (discountPercentage == "0")
@@ -65,7 +73,7 @@ namespace EpicFreeGamesBot
                                 {
                                     Title = game["title"]?.ToString() ?? "No Title",
                                     Description = game["description"]?.ToString() ?? "No Description",
-                                    ImageUrl = game["keyImages"]?[0]?["url"]?.ToString() ?? "No Image",
+                                    ImageUrl = GetBestImageUrl(game),
                                     Url = ConstructGameUrl(game)
                                 });
                             }
@@ -79,6 +87,27 @@ namespace EpicFreeGamesBot
             }
 
             return freeGames;
+        }
+
+        private static string GetBestImageUrl(JToken game)
+        {
+            var keyImages = game["keyImages"] as JArray;
+
+            if (keyImages == null || !keyImages.HasValues)
+                return "No Image";
+
+            // Try to find the best image - prefer "OfferImageWide" type
+            foreach (var image in keyImages)
+            {
+                string type = image["type"]?.ToString();
+                if (type == "OfferImageWide" || type == "DieselStoreFrontWide")
+                {
+                    return image["url"]?.ToString() ?? "No Image";
+                }
+            }
+
+            // Fall back to the first image if no preferred type is found
+            return keyImages[0]["url"]?.ToString() ?? "No Image";
         }
 
         private static string ConstructGameUrl(JToken game)
